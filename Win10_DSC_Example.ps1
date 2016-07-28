@@ -52,7 +52,7 @@
     File 'ISE_Profile'
     {
         DestinationPath = 'C:\Users\jdekoning\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1'
-        Contents        = 'Start-Steroids'
+        Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShellISE_profile.ps1).content -replace '﻿',''
         DependsOn       = '[user]jdekoning'
         Ensure          = 'Present'
         Force           = $true
