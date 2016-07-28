@@ -6,6 +6,10 @@
   Import-DscResource -ModuleName 'PackageManagementProviderResource'
   Import-DscResource -ModuleName 'PowerShellModule'
   
+  #for hkcu changes
+  $usersid       = (whoami /user)[-1] -replace '.*(s-\d-\d-\d{2}.*)','$1' 
+
+  #some choco packages might not install because DSC runs in system context by default
   $chocopackages = 'googlechrome',
                     'filezilla',
                     'vlc',
@@ -52,31 +56,10 @@
       }
     }
 
-    User 'jdekoning'
-    {
-      UserName                 = 'jdekoning'
-      Disabled                 = $false
-      Ensure                   = 'Present'
-      FullName                 = 'Javy de Koning'
-      PasswordChangeNotAllowed = $false
-      PasswordChangeRequired   = $false
-      PasswordNeverExpires     = $true
-    }
-
-    File profiledir
-    {
-      DestinationPath = 'C:\Users\jdekoning'
-      DependsOn       = '[User]jdekoning'
-      Ensure          = 'Present'
-      Force           = $true
-      Type            = 'Directory'
-    }
-
     File 'Profile'
     {
-      DestinationPath = 'C:\Users\jdekoning\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1'
+      DestinationPath = "$home\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
       Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShell_profile.ps1 -usebasicparsing).content -replace '﻿',''
-      DependsOn       = '[File]profiledir'
       Ensure          = 'Present'
       Force           = $true
       Type            = 'File'
@@ -84,9 +67,8 @@
 
     File 'ISE_Profile'
     {
-      DestinationPath = 'C:\Users\jdekoning\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1'
+      DestinationPath = "$home\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
       Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShellISE_profile.ps1 -usebasicparsing).content -replace '﻿',''
-      DependsOn       = '[File]profiledir'
       Ensure          = 'Present'
       Force           = $true
       Type            = 'File'
@@ -102,6 +84,7 @@
       {
         Name = "$p"
         DependsOn = '[cChocoInstaller]installChoco'
+        PsDscRunAsCredential = $cred
       }    
     }
 
