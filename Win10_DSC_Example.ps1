@@ -1,7 +1,6 @@
 ﻿configuration Win10
 {
   Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
-  Import-DscResource -ModuleName 'xWindowsUpdate'
   Import-DscResource -ModuleName 'cChoco'
   Import-DscResource -ModuleName 'PackageManagementProviderResource'
   
@@ -27,13 +26,6 @@
         Name = $_
         Ensure = 'Enable'
       }
-    }
-
-    xWindowsUpdateAgent 'StandAlone'
-    {
-      IsSingleInstance = 'Yes'
-      Source = 'WindowsUpdate'
-      Category = @('Important','Optional','Security')
     }
 
     User 'jdekoning'
@@ -72,19 +64,13 @@
       InstallDir = 'c:\choco'
     }
     
-    $chocopackages = 'googlechrome','filezilla','vlc','sublimetext3'
+    $chocopackages = 'googlechrome','filezilla','vlc','sublimetext3','jre8','7zip','atom','keepass','conemu','mysql.workbench','googledrive','f.lux','pidgin','rdcman','unchecky','rufus','vmwarevsphereclient'
     foreach ($p in $chocopackages) {
       cChocoPackageInstaller $p
       {
         Name = "$p"
         DependsOn = '[cChocoInstaller]installChoco'
       }    
-    }
-
-    PSModule 'posh-git' 
-    {
-        Name = 'posh-git'
-        Ensure = 'Present'
     }
   }
 }
