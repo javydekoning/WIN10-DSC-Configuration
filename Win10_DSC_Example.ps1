@@ -12,7 +12,7 @@
                     'sublimetext3',
                     'jre8',
                     '7zip',
-                    'atom',
+                    'greenshot',
                     'keepass',
                     'conemu',
                     'mysql.workbench',
@@ -21,8 +21,7 @@
                     'pidgin',
                     'rdcman',
                     'unchecky',
-                    'rufus',
-                    'vmwarevsphereclient'
+                    'rufus'
 
   $features       = 'Microsoft-Windows-Subsystem-Linux',
                     'Microsoft-Hyper-V',
@@ -76,7 +75,7 @@
     File 'Profile'
     {
       DestinationPath = 'C:\Users\jdekoning\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1'
-      Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShell_profile.ps1).content -replace '﻿',''
+      Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShell_profile.ps1 -usebasicparsing).content -replace '﻿',''
       DependsOn       = '[File]profiledir'
       Ensure          = 'Present'
       Force           = $true
@@ -86,7 +85,7 @@
     File 'ISE_Profile'
     {
       DestinationPath = 'C:\Users\jdekoning\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1'
-      Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShellISE_profile.ps1).content -replace '﻿',''
+      Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShellISE_profile.ps1 -usebasicparsing).content -replace '﻿',''
       DependsOn       = '[File]profiledir'
       Ensure          = 'Present'
       Force           = $true
@@ -97,13 +96,21 @@
     {
       InstallDir = 'c:\choco'
     }
-    
+       
     foreach ($p in $chocopackages) {
       cChocoPackageInstaller $p
       {
         Name = "$p"
         DependsOn = '[cChocoInstaller]installChoco'
       }    
+    }
+
+    foreach ($m in $modules) {
+      PSModuleResource $m
+      {
+        Ensure = 'present'
+        Module_Name = "$m"
+      }
     }
   }
 }
