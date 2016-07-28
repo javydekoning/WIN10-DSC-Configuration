@@ -1,25 +1,50 @@
 ﻿configuration Win10
 {
+  #Load resources
   Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
   Import-DscResource -ModuleName 'cChoco'
   Import-DscResource -ModuleName 'PackageManagementProviderResource'
+  Import-DscResource -ModuleName 'PowerShellModule'
   
-  $cred = Import-Clixml C:\Users\jdekoning\pscredobj.cred
+  $chocopackages = 'googlechrome',
+                    'filezilla',
+                    'vlc',
+                    'sublimetext3',
+                    'jre8',
+                    '7zip',
+                    'atom',
+                    'keepass',
+                    'conemu',
+                    'mysql.workbench',
+                    'googledrive',
+                    'f.lux',
+                    'pidgin',
+                    'rdcman',
+                    'unchecky',
+                    'rufus',
+                    'vmwarevsphereclient'
+
+  $features       = 'Microsoft-Windows-Subsystem-Linux',
+                    'Microsoft-Hyper-V',
+                    'Microsoft-Hyper-V-All',
+                    'Microsoft-Hyper-V-Common-Drivers-Package',
+                    'Microsoft-Hyper-V-Guest-Integration-Drivers-Package',
+                    'Microsoft-Hyper-V-Hypervisor',
+                    'Microsoft-Hyper-V-Management-Clients',
+                    'Microsoft-Hyper-V-Management-PowerShell',
+                    'Microsoft-Hyper-V-Services',
+                    'Microsoft-Hyper-V-Tools-All',
+                    'NetFx3',
+                    'NetFx4-AdvSrvs' 		
+
+  $modules       = 'PSScriptAnalyzer',
+                   'Pester',
+                   'PSReadline',
+                   'PowerShellISE-preview',
+                   'ISESteroids'
   
   node ('Localhost')
   {
-    $features = 'Microsoft-Windows-Subsystem-Linux',
-                'Microsoft-Hyper-V',
-                'Microsoft-Hyper-V-All',
-                'Microsoft-Hyper-V-Common-Drivers-Package',
-                'Microsoft-Hyper-V-Guest-Integration-Drivers-Package',
-                'Microsoft-Hyper-V-Hypervisor',
-                'Microsoft-Hyper-V-Management-Clients',
-                'Microsoft-Hyper-V-Management-PowerShell',
-                'Microsoft-Hyper-V-Services',
-                'Microsoft-Hyper-V-Tools-All',
-                'NetFx3',
-                'NetFx4-AdvSrvs' 		
     $features | % {
       WindowsOptionalFeature "$_"
       {
@@ -30,33 +55,42 @@
 
     User 'jdekoning'
     {
-        UserName                 = 'jdekoning'
-        Disabled                 = $false
-        Ensure                   = 'Present'
-        FullName                 = 'Javy de Koning'
-        PasswordChangeNotAllowed = $false
-        PasswordChangeRequired   = $false
-        PasswordNeverExpires     = $true
+      UserName                 = 'jdekoning'
+      Disabled                 = $false
+      Ensure                   = 'Present'
+      FullName                 = 'Javy de Koning'
+      PasswordChangeNotAllowed = $false
+      PasswordChangeRequired   = $false
+      PasswordNeverExpires     = $true
+    }
+
+    File profiledir
+    {
+      DestinationPath = 'C:\Users\jdekoning'
+      DependsOn       = '[User]jdekoning'
+      Ensure          = 'Present'
+      Force           = $true
+      Type            = 'Directory'
     }
 
     File 'Profile'
     {
-        DestinationPath = 'C:\Users\jdekoning\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1'
-        Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShell_profile.ps1).content -replace '﻿',''
-        DependsOn       = '[user]jdekoning'
-        Ensure          = 'Present'
-        Force           = $true
-        Type            = 'File'
+      DestinationPath = 'C:\Users\jdekoning\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1'
+      Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShell_profile.ps1).content -replace '﻿',''
+      DependsOn       = '[File]profiledir'
+      Ensure          = 'Present'
+      Force           = $true
+      Type            = 'File'
     }
 
     File 'ISE_Profile'
     {
-        DestinationPath = 'C:\Users\jdekoning\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1'
-        Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShellISE_profile.ps1).content -replace '﻿',''
-        DependsOn       = '[user]jdekoning'
-        Ensure          = 'Present'
-        Force           = $true
-        Type            = 'File'
+      DestinationPath = 'C:\Users\jdekoning\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1'
+      Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShellISE_profile.ps1).content -replace '﻿',''
+      DependsOn       = '[File]profiledir'
+      Ensure          = 'Present'
+      Force           = $true
+      Type            = 'File'
     }
 
     cChocoInstaller installChoco
@@ -64,7 +98,6 @@
       InstallDir = 'c:\choco'
     }
     
-    $chocopackages = 'googlechrome','filezilla','vlc','sublimetext3','jre8','7zip','atom','keepass','conemu','mysql.workbench','googledrive','f.lux','pidgin','rdcman','unchecky','rufus','vmwarevsphereclient'
     foreach ($p in $chocopackages) {
       cChocoPackageInstaller $p
       {
