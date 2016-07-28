@@ -1,127 +1,57 @@
-﻿configuration Win10
+﻿#https://github.com/PowerShell/xHyper-V/blob/dev/DSCResources/MSFT_xVMSwitch/MSFT_xVMSwitch.psm1
+#https://msdn.microsoft.com/en-us/powershell/dsc/authoringresourcemof
+function Get-TargetResource 
 {
-  #Load resources
-  $SystemTimeZone = 'W. Europe Standard Time'
-  
-  Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
-  Import-DscResource -ModuleName 'cChoco'
-  Import-DscResource -ModuleName 'PackageManagementProviderResource'
-  Import-DscResource -ModuleName 'PowerShellModule'
-  Import-DscResource -ModuleName 'xTimeZone'  
-  Import-DscResource -ModuleName 'xSystemSecurity'  
-  Import-DscResource -ModuleName 'xHyper-V'  
+    param 
+    (       
+      [ValidateSet("Present", "Absent")]
+      [string]$Ensure = "Present",
 
-  #for hkcu changes
-  $usersid       = (whoami /user)[-1] -replace '.*(s-\d-\d-\d{2}.*)','$1' 
+      [Parameter(Mandatory)]
+      [ValidateNotNullOrEmpty()]
+      [string]$Name
+    )
 
-  #some choco packages might not install because DSC runs in system context by default
-  $chocopackages =  'googlechrome',
-                    'filezilla',
-                    'vlc',
-                    'sublimetext3',
-                    'jre8',
-                    '7zip',
-                    'greenshot',
-                    'keepass',
-                    'conemu',
-                    'mysql.workbench',
-                    'googledrive',
-                    'f.lux',
-                    'pidgin',
-                    'rdcman',
-                    'unchecky',
-                    'rufus'
+    $getResult = $null;
 
-  $features       = 'Microsoft-Windows-Subsystem-Linux',
-                    'Microsoft-Hyper-V',
-                    'Microsoft-Hyper-V-All',
-                    'Microsoft-Hyper-V-Common-Drivers-Package',
-                    'Microsoft-Hyper-V-Guest-Integration-Drivers-Package',
-                    'Microsoft-Hyper-V-Hypervisor',
-                    'Microsoft-Hyper-V-Management-Clients',
-                    'Microsoft-Hyper-V-Management-PowerShell',
-                    'Microsoft-Hyper-V-Services',
-                    'Microsoft-Hyper-V-Tools-All',
-                    'NetFx3',
-                    'NetFx4-AdvSrvs' 		
-
-  $modules       = 'PSScriptAnalyzer',
-                   'Pester',
-                   'PSReadline',
-                   'PowerShellISE-preview',
-                   'ISESteroids'
-  
-  node ('Localhost')
-  {
-    $features | % {
-      WindowsOptionalFeature "$_"
-      {
-        Name = $_
-        Ensure = 'Enable'
-      }
+    if (Get-AppxPackage -name $Name) {
+      $ensureResult = 'Present'
+    } else {
+      $ensureResult = 'Absent'    
     }
 
-    File 'Profile'
-    {
-      DestinationPath = "$home\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
-      Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShell_profile.ps1 -usebasicparsing).content -replace '﻿',''
-      Ensure          = 'Present'
-      Force           = $true
-      Type            = 'File'
-    }
+    $getResult = @{
+                    Name = $Name; 
+                    Ensure = $ensureResult;
+                  }
 
-    File 'ISE_Profile'
-    {
-      DestinationPath = "$home\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
-      Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/PowershellTools/master/Microsoft.PowerShellISE_profile.ps1 -usebasicparsing).content -replace '﻿',''
-      Ensure          = 'Present'
-      Force           = $true
-      Type            = 'File'
-    }
-
-    cChocoInstaller installChoco
-    {
-      InstallDir = 'c:\choco'
-    }
-       
-    foreach ($p in $chocopackages) {
-      cChocoPackageInstaller $p
-      {
-        Name = "$p"
-        DependsOn = '[cChocoInstaller]installChoco'
-        PsDscRunAsCredential = $cred
-      }    
-    }
-
-    foreach ($m in $modules) {
-      PSModuleResource $m
-      {
-        Ensure = 'present'
-        Module_Name = "$m"
-      }
-    }
-
-    xTimeZone TimeZoneExample
-    {
-      IsSingleInstance = 'Yes'
-      TimeZone         = $SystemTimeZone
-    }
-    
-    xUac UAC 
-    {
-        Setting = 'NotifyChangesWithoutDimming'
-    }
-    
-    xVMSwitch defaultSwitch
-    {
-      Name = 'defaultSwitch'
-      Type = 'External'
-      Ensure = 'present'
-      DependsOn = '[WindowsOptionalFeature]Microsoft-Hyper-V-Management-PowerShell'
-    } 
-  }
+    return $getResult;
 }
-win10
 
+function Set-TargetResource 
+{
+    param 
+    (       
+      [ValidateSet("Present", "Absent")]
+      [string]$Ensure = "Present",
 
-#find-module xhyper-v | install-module -force
+      [Parameter(Mandatory)]
+      [ValidateNotNullOrEmpty()]
+      [string]$Name
+    )
+
+    $getResult = $null;
+
+    if (Get-AppxPackage -name $Name) {
+      $ensureResult = 'Present'
+    } else {
+      $ensureResult = 'Absent'    
+    }
+
+    $getResult = @{
+                    Name = $Name; 
+                    Ensure = $ensureResult;
+                  }
+
+    return $getResult;
+}
