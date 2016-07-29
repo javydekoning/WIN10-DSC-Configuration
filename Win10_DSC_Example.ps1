@@ -124,4 +124,4 @@
 win10
 
 
-#find-module xhyper-v | install-module -force
+find-module 'PSDesiredStateConfiguration','cChoco','PackageManagementProviderResource','PowerShellModule','xTimeZone','xSystemSecurity','xHyper-V' | install-module -force
