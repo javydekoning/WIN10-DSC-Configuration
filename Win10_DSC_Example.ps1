@@ -1,4 +1,6 @@
-﻿$cred = get-credential
+﻿find-module 'cChoco','PackageManagementProviderResource','PowerShellModule','xTimeZone','xSystemSecurity','xHyper-V','cAppxPackage' | install-module -force
+
+$cred = get-credential
 
 $ConfigurationData = @{
     AllNodes = @(
@@ -13,11 +15,25 @@ configuration Win10
 {
   param (
       [Parameter(Mandatory=$false)]
-      [PSCredential]$Credential
+      [PSCredential]$Credential,
+
+      [Parameter(Mandatory=$true)]
+      [string[]]$ChocoPackages,     
+
+      [Parameter(Mandatory=$true)]
+      [string[]]$features,  
+
+      [Parameter(Mandatory=$true)]
+      [string[]]$modules,
+      
+      [Parameter(Mandatory=$true)]
+      [string[]]$removeableapps,
+
+      [Parameter(Mandatory=$true)]
+      [string]$SystemTimeZone
   )
-  #Load resources
   
-  $SystemTimeZone = 'W. Europe Standard Time'
+  
   
   Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
   Import-DscResource -ModuleName 'cChoco'
@@ -30,44 +46,7 @@ configuration Win10
 
   #for hkcu changes
   $usersid       = (whoami /user)[-1] -replace '.*(s-\d-\d-\d{2}.*)','$1' 
-
-  #some choco packages might not install because DSC runs in system context by default
-  $chocopackages =  'googlechrome',
-                    'filezilla',
-                    'vlc',
-                    'sublimetext3',
-                    'jre8',
-                    '7zip',
-                    'greenshot',
-                    'keepass',
-                    'conemu',
-                    'mysql.workbench',
-                    'googledrive',
-                    'f.lux',
-                    'pidgin',
-                    'rdcman',
-                    'unchecky',
-                    'rufus'
-
-  $features       = 'Microsoft-Windows-Subsystem-Linux',
-                    'Microsoft-Hyper-V',
-                    'Microsoft-Hyper-V-All',
-                    'Microsoft-Hyper-V-Common-Drivers-Package',
-                    'Microsoft-Hyper-V-Guest-Integration-Drivers-Package',
-                    'Microsoft-Hyper-V-Hypervisor',
-                    'Microsoft-Hyper-V-Management-Clients',
-                    'Microsoft-Hyper-V-Management-PowerShell',
-                    'Microsoft-Hyper-V-Services',
-                    'Microsoft-Hyper-V-Tools-All',
-                    'NetFx3',
-                    'NetFx4-AdvSrvs' 		
-
-  $modules       = 'PSScriptAnalyzer',
-                   'Pester',
-                   'PSReadline',
-                   'PowerShellISE-preview',
-                   'ISESteroids'
-  
+ 
   Node $AllNodes.NodeName
   {
     $features | % {
@@ -145,11 +124,31 @@ configuration Win10
     }
   }
 }
-win10
 
+$SystemTimeZone= 'W. Europe Standard Time'
 
-find-module 'PSDesiredStateConfiguration','cChoco','PackageManagementProviderResource','PowerShellModule','xTimeZone','xSystemSecurity','xHyper-V','cAppxPackage' | install-module -force
+$chocopackages = 'googlechrome','filezilla','vlc','sublimetext3','jre8','7zip','greenshot',
+                 'keepass','conemu','mysql.workbench','googledrive','f.lux','pidgin',
+                 'rdcman','unchecky','rufus','atom'
 
-$config = win10 -ConfigurationData $ConfigurationData -credential $cred
+$features      = 'Microsoft-Windows-Subsystem-Linux','Microsoft-Hyper-V','Microsoft-Hyper-V-All',
+                 'Microsoft-Hyper-V-Common-Drivers-Package',
+                 'Microsoft-Hyper-V-Guest-Integration-Drivers-Package',
+                 'Microsoft-Hyper-V-Hypervisor','Microsoft-Hyper-V-Management-Clients',
+                 'Microsoft-Hyper-V-Management-PowerShell','Microsoft-Hyper-V-Services',
+                 'Microsoft-Hyper-V-Tools-All','NetFx3','NetFx4-AdvSrvs'
+
+$removeableapps= 'Microsoft.3DBuilder','Microsoft.BingFinance','Microsoft.BingNews',
+                 'Microsoft.BingSports','Microsoft.BingWeather','Microsoft.MicrosoftOfficeHub',
+                 'Microsoft.MicrosoftSolitaireCollection','Microsoft.Office.OneNote',
+                 'Microsoft.People','Microsoft.SkypeApp','Microsoft.Appconnector',
+                 'Microsoft.Getstarted','Microsoft.Windows.ParentalControls',
+                 'Microsoft.Windows.ShellExperienceHost','microsoft.windowscommunicationsapps',
+                 'Microsoft.WindowsMaps','Microsoft.WindowsPhone','Microsoft.XboxApp',
+                 'Microsoft.XboxIdentityProvider','Microsoft.ZuneMusic','Microsoft.ZuneVideo'
+
+$modules       = 'PSScriptAnalyzer','Pester','PSReadline','PowerShellISE-preview','ISESteroids'
+
+$config = win10 -ConfigurationData $ConfigurationData -credential $cred -ChocoPackages $chocopackages -features $features -removeableapps $removeableapps -modules $modules -SystemTimeZone 'W. Europe Standard Time'
 
 Start-DscConfiguration -Verbose -Path $config.PSParentPath -Wait -Force
