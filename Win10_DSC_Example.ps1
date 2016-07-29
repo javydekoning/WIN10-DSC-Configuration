@@ -114,6 +114,7 @@ configuration Win10
       Type = 'External'
       Ensure = 'present'
       DependsOn = '[WindowsOptionalFeature]Microsoft-Hyper-V-Management-PowerShell'
+      NetAdapterName = 'Ethernet'
     } 
     
     cAppxPackage 'WindowsAlarms'
