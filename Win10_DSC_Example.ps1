@@ -1,6 +1,11 @@
-﻿find-module 'cChoco','PackageManagementProviderResource','PowerShellModule','xTimeZone','xSystemSecurity','xHyper-V','cAppxPackage' | install-module -force
+﻿'cChoco','PackageManagementProviderResource','PowerShellModule','xTimeZone','xSystemSecurity','xHyper-V','cAppxPackage' | %{
+  if (-not(get-dscresource -module $_)) {find-module -name $_ | install-module -SkipPublisherCheck -force}
+}
 
-$cred = get-credential
+if (-not($cred)) {
+  $cred = get-credential
+}
+
 
 $ConfigurationData = @{
     AllNodes = @(
