@@ -1,6 +1,22 @@
-﻿configuration Win10
+﻿$cred = get-credential
+
+$ConfigurationData = @{
+    AllNodes = @(
+        @{
+            NodeName='Localhost'
+            PSDscAllowPlainTextPassword=$true
+         }
+    )
+}
+
+configuration Win10
 {
+  param (
+      [Parameter(Mandatory=$false)]
+      [PSCredential]$Credential
+  )
   #Load resources
+  
   $SystemTimeZone = 'W. Europe Standard Time'
   
   Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
@@ -9,7 +25,8 @@
   Import-DscResource -ModuleName 'PowerShellModule'
   Import-DscResource -ModuleName 'xTimeZone'  
   Import-DscResource -ModuleName 'xSystemSecurity'  
-  Import-DscResource -ModuleName 'xHyper-V'  
+  Import-DscResource -ModuleName 'xHyper-V'
+  Import-DscResource -ModuleName 'cAppxPackage'  
 
   #for hkcu changes
   $usersid       = (whoami /user)[-1] -replace '.*(s-\d-\d-\d{2}.*)','$1' 
@@ -51,7 +68,7 @@
                    'PowerShellISE-preview',
                    'ISESteroids'
   
-  node ('Localhost')
+  Node $AllNodes.NodeName
   {
     $features | % {
       WindowsOptionalFeature "$_"
@@ -89,7 +106,7 @@
       {
         Name = "$p"
         DependsOn = '[cChocoInstaller]installChoco'
-        PsDscRunAsCredential = $cred
+        PsDscRunAsCredential = $Credential
       }    
     }
 
@@ -119,9 +136,20 @@
       Ensure = 'present'
       DependsOn = '[WindowsOptionalFeature]Microsoft-Hyper-V-Management-PowerShell'
     } 
+    
+    cAppxPackage 'WindowsAlarms'
+    {
+      Name = 'Microsoft.WindowsAlarms'
+      Ensure = 'Absent'
+      PsDscRunAsCredential = $Credential
+    }
   }
 }
 win10
 
 
-find-module 'PSDesiredStateConfiguration','cChoco','PackageManagementProviderResource','PowerShellModule','xTimeZone','xSystemSecurity','xHyper-V' | install-module -force
+find-module 'PSDesiredStateConfiguration','cChoco','PackageManagementProviderResource','PowerShellModule','xTimeZone','xSystemSecurity','xHyper-V','cAppxPackage' | install-module -force
+
+$config = win10 -ConfigurationData $ConfigurationData -credential $cred
+
+Start-DscConfiguration -Verbose -Path $config.PSParentPath -Wait -Force
