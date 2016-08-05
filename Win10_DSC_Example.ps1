@@ -135,7 +135,7 @@ $SystemTimeZone= 'W. Europe Standard Time'
 
 $chocopackages = 'googlechrome','filezilla','vlc','sublimetext3','jre8','7zip','greenshot',
                  'keepass','conemu','mysql.workbench','googledrive','f.lux','pidgin',
-                 'rdcman','unchecky','rufus','atom'
+                 'rdcman','unchecky','rufus','atom','classic-shell'
 
 $features      = 'Microsoft-Windows-Subsystem-Linux','Microsoft-Hyper-V','Microsoft-Hyper-V-All',
                  'Microsoft-Hyper-V-Common-Drivers-Package',
