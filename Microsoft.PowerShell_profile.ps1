@@ -27,3 +27,10 @@ function ippc02 {
 Register-EngineEvent PowerShell.Exiting –Action {
    Export-Clixml -InputObject $c -Path $CredFile
 }
+
+function Unlock-ADUser {
+   param ($User);
+   $User = [adsi]([adsisearcher]"samaccountname=$user").findone().path;
+   $User.psbase.InvokeSet('IsAccountLocked',$false);
+   $User.SetInfo()
+}  
