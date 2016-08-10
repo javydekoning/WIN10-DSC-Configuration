@@ -164,6 +164,6 @@ $removeableapps= 'Microsoft.3DBuilder','Microsoft.BingFinance','Microsoft.BingNe
 
 $modules       = 'PSScriptAnalyzer','Pester','PSReadline','PowerShellISE-preview','ISESteroids'
 
-$config = win10 -ConfigurationData $ConfigurationData -credential $cred -ChocoPackages $chocopackages -features $features -removeableapps $removeableapps -modules $modules -SystemTimeZone 'W. Europe Standard Time'
+$config = win10 -ConfigurationData $ConfigurationData -credential $cred -ChocoPackages $chocopackages -features $features -removeableapps $removeableapps -modules $modules -SystemTimeZone 'W. Europe Standard Time' -verbose
 
 Start-DscConfiguration -Verbose -Path $config.PSParentPath -Wait -Force
