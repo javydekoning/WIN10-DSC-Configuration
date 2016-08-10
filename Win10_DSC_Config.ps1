@@ -37,9 +37,7 @@ configuration Win10
       [Parameter(Mandatory=$true)]
       [string]$SystemTimeZone
   )
-  
-  
-  
+
   Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
   Import-DscResource -ModuleName 'cChoco'
   Import-DscResource -ModuleName 'PackageManagementProviderResource'
@@ -144,7 +142,7 @@ $SystemTimeZone= 'W. Europe Standard Time'
 
 $chocopackages = 'googlechrome','filezilla','vlc','sublimetext3','jre8','7zip','greenshot',
                  'keepass','conemu','mysql.workbench','googledrive','f.lux','pidgin',
-                 'rdcman','unchecky','rufus','atom','classic-shell','autohotkey'
+                 'unchecky','rufus','atom','classic-shell','autohotkey','mremoteng'
 
 $features      = 'Microsoft-Windows-Subsystem-Linux','Microsoft-Hyper-V','Microsoft-Hyper-V-All',
                  'Microsoft-Hyper-V-Common-Drivers-Package',
