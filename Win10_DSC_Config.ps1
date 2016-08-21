@@ -6,7 +6,6 @@ if (-not($cred)) {
   $cred = get-credential
 }
 
-
 $ConfigurationData = @{
     AllNodes = @(
         @{
@@ -80,11 +79,22 @@ configuration Win10
 
     File 'conemuconfig'
     {
-      DestinationPath = "$home\AppData\Roaming\ConEmu.xml"
+      DestinationPath = "$env:APPDATA\ConEmu.xml"
       Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/ConEmu.xml -usebasicparsing).content -replace '﻿',''
       Ensure          = 'Present'
       Force           = $true
       Type            = 'File'
+      DependsOn       = '[cChocoPackageInstaller]conemu'
+    }
+
+    File 'autohotkey'
+    {
+      DestinationPath = "$env:appdata\Microsoft\Windows\Start Menu\Programs\Startup\hotstring.ahk"
+      Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/hotstring.ahk -usebasicparsing).content -replace '﻿',''
+      Ensure          = 'Present'
+      Force           = $true
+      Type            = 'File'
+      DependsOn       = '[cChocoPackageInstaller]autohotkey'
     }
 
     cChocoInstaller installChoco
