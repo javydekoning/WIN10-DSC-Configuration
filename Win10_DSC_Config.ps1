@@ -9,7 +9,7 @@ if (-not($cred)) {
 $ConfigurationData = @{
     AllNodes = @(
         @{
-            NodeName='Localhost'
+            NodeName                   ='Localhost'
             PSDscAllowPlainTextPassword=$true
          }
     )
@@ -31,10 +31,7 @@ configuration Win10
       [string[]]$modules,
       
       [Parameter(Mandatory=$true)]
-      [string[]]$removeableapps,
-
-      [Parameter(Mandatory=$true)]
-      [string]$SystemTimeZone
+      [string[]]$removeableapps
   )
 
   Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
@@ -45,9 +42,6 @@ configuration Win10
   Import-DscResource -ModuleName 'xSystemSecurity'  
   Import-DscResource -ModuleName 'xHyper-V'
   Import-DscResource -ModuleName 'cAppxPackage'  
-
-  #for hkcu changes
-  $usersid       = (whoami /user)[-1] -replace '.*(s-\d-\d-\d{2}.*)','$1' 
  
   Node $AllNodes.NodeName
   {
@@ -105,24 +99,25 @@ configuration Win10
     foreach ($p in $chocopackages) {
       cChocoPackageInstaller $p
       {
-        Name = "$p"
-        DependsOn = '[cChocoInstaller]installChoco'
+        Name                 = "$p"
+        DependsOn            = '[cChocoInstaller]installChoco'
         PsDscRunAsCredential = $Credential
+        chocoParams          = '--allowemptychecksum --allowemptychecksumsecure'
       }    
     }
 
     foreach ($m in $modules) {
       PSModuleResource $m
       {
-        Ensure = 'present'
+        Ensure      = 'present'
         Module_Name = "$m"
       }
     }
 
-    xTimeZone TimeZoneExample
+    xTimeZone TimeZone
     {
       IsSingleInstance = 'Yes'
-      TimeZone         = $SystemTimeZone
+      TimeZone         = 'W. Europe Standard Time'
     }
     
     xUac UAC 
@@ -145,14 +140,22 @@ configuration Win10
       Ensure = 'Absent'
       PsDscRunAsCredential = $Credential
     }
+
+    Registry 'DeveloperMode'
+    {
+        Ensure      = "Present"  # You can also set Ensure to "Absent"
+        Key         = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock"
+        ValueName   = "AllowDevelopmentWithoutDevLicense"
+        ValueData   = "1"
+        ValueType   = "Dword"
+        Force       = $true
+    }
   }
 }
 
-$SystemTimeZone= 'W. Europe Standard Time'
-
 $chocopackages = 'googlechrome','filezilla','vlc','sublimetext3','jre8','7zip','greenshot',
                  'keepass','conemu','mysql.workbench','googledrive','f.lux','pidgin',
-                 'unchecky','rufus','atom','classic-shell','autohotkey','mremoteng'
+                 'unchecky','rufus','classic-shell','autohotkey','mremoteng','evernote','classic-shell'
 
 $features      = 'Microsoft-Windows-Subsystem-Linux','Microsoft-Hyper-V','Microsoft-Hyper-V-All',
                  'Microsoft-Hyper-V-Common-Drivers-Package',
@@ -172,6 +175,6 @@ $removeableapps= 'Microsoft.3DBuilder','Microsoft.BingFinance','Microsoft.BingNe
 
 $modules       = 'PSScriptAnalyzer','Pester','PSReadline','PowerShellISE-preview','ISESteroids'
 
-$config = win10 -ConfigurationData $ConfigurationData -credential $cred -ChocoPackages $chocopackages -features $features -removeableapps $removeableapps -modules $modules -SystemTimeZone 'W. Europe Standard Time' -verbose
+$config = win10 -ConfigurationData $ConfigurationData -credential $cred -ChocoPackages $chocopackages -features $features -removeableapps $removeableapps -modules $modules -verbose
 
 Start-DscConfiguration -Verbose -Path $config.PSParentPath -Wait -Force
