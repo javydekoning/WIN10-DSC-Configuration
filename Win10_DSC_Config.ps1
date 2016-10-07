@@ -9,9 +9,13 @@ if (-not($cred)) {
 $ConfigurationData = @{
     AllNodes = @(
         @{
-            NodeName='Localhost'
-            PSDscAllowPlainTextPassword=$true
-         }
+            NodeName                    = 'Localhost'
+            PSDscAllowPlainTextPassword = $true
+            ChocoPackages               = @('googlechrome','filezilla','vlc','sublimetext3','jre8','7zip','greenshot','keepass','conemu','mysql.workbench','googledrive','f.lux','pidgin','unchecky','rufus','classic-shell','autohotkey','mremoteng','evernote')
+            WindowsFeatures             = @('Microsoft-Windows-Subsystem-Linux','Microsoft-Hyper-V','Microsoft-Hyper-V-All','Microsoft-Hyper-V-Common-Drivers-Package','Microsoft-Hyper-V-Guest-Integration-Drivers-Package','Microsoft-Hyper-V-Hypervisor','Microsoft-Hyper-V-Management-Clients','Microsoft-Hyper-V-Management-PowerShell','Microsoft-Hyper-V-Services','Microsoft-Hyper-V-Tools-All','NetFx3','NetFx4-AdvSrvs')
+            PowerShellModules           = @('PSScriptAnalyzer','Pester','PSReadline','PowerShellISE-preview','ISESteroids')
+            RemovedApps                 = @('Microsoft.3DBuilder','Microsoft.BingFinance','Microsoft.BingNews','Microsoft.BingSports','Microsoft.BingWeather','Microsoft.MicrosoftOfficeHub','Microsoft.MicrosoftSolitaireCollection','Microsoft.Office.OneNote','Microsoft.People','Microsoft.SkypeApp','Microsoft.Appconnector','Microsoft.Getstarted','Microsoft.Windows.ParentalControls','Microsoft.Windows.ShellExperienceHost','microsoft.windowscommunicationsapps','Microsoft.WindowsMaps','Microsoft.WindowsPhone','Microsoft.XboxApp','Microsoft.XboxIdentityProvider','Microsoft.ZuneMusic','Microsoft.ZuneVideo')
+        }
     )
 }
 
@@ -19,22 +23,7 @@ configuration Win10
 {
   param (
       [Parameter(Mandatory=$false)]
-      [PSCredential]$Credential,
-
-      [Parameter(Mandatory=$true)]
-      [string[]]$ChocoPackages,     
-
-      [Parameter(Mandatory=$true)]
-      [string[]]$features,  
-
-      [Parameter(Mandatory=$true)]
-      [string[]]$modules,
-      
-      [Parameter(Mandatory=$true)]
-      [string[]]$removeableapps,
-
-      [Parameter(Mandatory=$true)]
-      [string]$SystemTimeZone
+      [PSCredential]$Credential
   )
 
   Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
@@ -45,18 +34,15 @@ configuration Win10
   Import-DscResource -ModuleName 'xSystemSecurity'  
   Import-DscResource -ModuleName 'xHyper-V'
   Import-DscResource -ModuleName 'cAppxPackage'  
-
-  #for hkcu changes
-  $usersid       = (whoami /user)[-1] -replace '.*(s-\d-\d-\d{2}.*)','$1' 
  
   Node $AllNodes.NodeName
   {
-    $features | % {
+    $Node.WindowsFeatures.ForEach{
       WindowsOptionalFeature "$_"
       {
-        Name = $_
+        Name   = $_
         Ensure = 'Enable'
-      }
+      }    
     }
 
     File 'Profile'
@@ -102,27 +88,28 @@ configuration Win10
       InstallDir = 'c:\choco'
     }
        
-    foreach ($p in $chocopackages) {
-      cChocoPackageInstaller $p
+    $Node.ChocoPackages.ForEach{
+      cChocoPackageInstaller $_
       {
-        Name = "$p"
-        DependsOn = '[cChocoInstaller]installChoco'
+        Name                 = "$_"
+        DependsOn            = '[cChocoInstaller]installChoco'
         PsDscRunAsCredential = $Credential
+        chocoParams          = '--allowemptychecksum --allowemptychecksumsecure'
+      }
+    }
+ 
+    $Node.PowerShellModules.foreach{
+      PSModuleResource $_
+      {
+        Ensure      = 'present'
+        Module_Name = "$_"
       }    
     }
 
-    foreach ($m in $modules) {
-      PSModuleResource $m
-      {
-        Ensure = 'present'
-        Module_Name = "$m"
-      }
-    }
-
-    xTimeZone TimeZoneExample
+    xTimeZone TimeZone
     {
       IsSingleInstance = 'Yes'
-      TimeZone         = $SystemTimeZone
+      TimeZone         = 'W. Europe Standard Time'
     }
     
     xUac UAC 
@@ -139,39 +126,27 @@ configuration Win10
       NetAdapterName = 'Ethernet'
     } 
     
-    cAppxPackage 'WindowsAlarms'
+    $Node.RemovedApps.ForEach{
+    cAppxPackage $_
+        {
+          Name                 = "$_"
+          Ensure               = 'Absent'
+          PsDscRunAsCredential = $Credential
+        }
+    }
+
+    Registry 'DeveloperMode'
     {
-      Name = 'Microsoft.WindowsAlarms'
-      Ensure = 'Absent'
-      PsDscRunAsCredential = $Credential
+        Ensure      = "Present"  # You can also set Ensure to "Absent"
+        Key         = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock"
+        ValueName   = "AllowDevelopmentWithoutDevLicense"
+        ValueData   = "1"
+        ValueType   = "Dword"
+        Force       = $true
     }
   }
 }
 
-$SystemTimeZone= 'W. Europe Standard Time'
-
-$chocopackages = 'googlechrome','filezilla','vlc','sublimetext3','jre8','7zip','greenshot',
-                 'keepass','conemu','mysql.workbench','googledrive','f.lux','pidgin',
-                 'unchecky','rufus','atom','classic-shell','autohotkey','mremoteng'
-
-$features      = 'Microsoft-Windows-Subsystem-Linux','Microsoft-Hyper-V','Microsoft-Hyper-V-All',
-                 'Microsoft-Hyper-V-Common-Drivers-Package',
-                 'Microsoft-Hyper-V-Guest-Integration-Drivers-Package',
-                 'Microsoft-Hyper-V-Hypervisor','Microsoft-Hyper-V-Management-Clients',
-                 'Microsoft-Hyper-V-Management-PowerShell','Microsoft-Hyper-V-Services',
-                 'Microsoft-Hyper-V-Tools-All','NetFx3','NetFx4-AdvSrvs'
-
-$removeableapps= 'Microsoft.3DBuilder','Microsoft.BingFinance','Microsoft.BingNews',
-                 'Microsoft.BingSports','Microsoft.BingWeather','Microsoft.MicrosoftOfficeHub',
-                 'Microsoft.MicrosoftSolitaireCollection','Microsoft.Office.OneNote',
-                 'Microsoft.People','Microsoft.SkypeApp','Microsoft.Appconnector',
-                 'Microsoft.Getstarted','Microsoft.Windows.ParentalControls',
-                 'Microsoft.Windows.ShellExperienceHost','microsoft.windowscommunicationsapps',
-                 'Microsoft.WindowsMaps','Microsoft.WindowsPhone','Microsoft.XboxApp',
-                 'Microsoft.XboxIdentityProvider','Microsoft.ZuneMusic','Microsoft.ZuneVideo'
-
-$modules       = 'PSScriptAnalyzer','Pester','PSReadline','PowerShellISE-preview','ISESteroids'
-
-$config = win10 -ConfigurationData $ConfigurationData -credential $cred -ChocoPackages $chocopackages -features $features -removeableapps $removeableapps -modules $modules -SystemTimeZone 'W. Europe Standard Time' -verbose
+$config = win10 -ConfigurationData $ConfigurationData -credential $cred -verbose
 
 Start-DscConfiguration -Verbose -Path $config.PSParentPath -Wait -Force

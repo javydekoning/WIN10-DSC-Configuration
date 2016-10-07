@@ -5,13 +5,15 @@ configuration LCMConfig
     {
         Settings
         {
-            RefreshMode = 'Push'
-            RebootNodeIfNeeded = $true
-            AllowModuleOverwrite = $true
-            ActionAfterReboot = 'ContinueConfiguration' 
-            ConfigurationMode = 'ApplyandAutoCorrect'
+            RefreshMode                    = 'Push'
+            RebootNodeIfNeeded             = $true
+            AllowModuleOverwrite           = $true
+            ActionAfterReboot              = 'ContinueConfiguration' 
+            ConfigurationMode              = 'ApplyandAutoCorrect'
             ConfigurationModeFrequencyMins = '15'
         }
     }
 }
-LCMConfig
+$out = LCMConfig
+
+Set-DscLocalConfigurationManager -Path $out.PSParentPath -Force -Verbose -WhatIf
