@@ -78,3 +78,10 @@ return
 	Sleep, 500
 	Clipboard := ClipSaved
 Return
+
+;Detach IPpm
+<^<!m::
+	SendInput, {tab}
+	SendInput, {tab}
+	SendInput, {enter}
+Return
