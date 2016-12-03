@@ -1,12 +1,12 @@
 ﻿#####################
 # Pre-Requisites    #
 #####################
-'cChoco','PackageManagementProviderResource','PowerShellModule','xTimeZone','xHyper-V','cAppxPackage' | %{
+'cChoco','PackageManagementProviderResource','PowerShellModule','xTimeZone','xHyper-V','cAppxPackage','xPSDesiredStateConfiguration' | %{
     if (-not(get-dscresource -module $_)) {find-module -name $_ | install-module -SkipPublisherCheck -force}
 }
 
 if (-not($cred)) {
-    $cred = get-credential
+    $cred = get-credential "$(whoami)"
 }
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Force
 
@@ -42,10 +42,10 @@ $ConfigurationData = @{
         @{
             NodeName                    = 'Localhost'
             PSDscAllowPlainTextPassword = $true
-            ChocoPackages               = @('googlechrome','filezilla','vlc','sublimetext3','jre8','7zip','greenshot','keepass','conemu','mysql.workbench','googledrive','f.lux','pidgin','unchecky','rufus','classic-shell','autohotkey','mremoteng','evernote','VisualStudioCode')
-            WindowsFeatures             = @('Microsoft-Windows-Subsystem-Linux','Microsoft-Hyper-V','Microsoft-Hyper-V-All','Microsoft-Hyper-V-Common-Drivers-Package','Microsoft-Hyper-V-Guest-Integration-Drivers-Package','Microsoft-Hyper-V-Hypervisor','Microsoft-Hyper-V-Management-Clients','Microsoft-Hyper-V-Management-PowerShell','Microsoft-Hyper-V-Services','Microsoft-Hyper-V-Tools-All','NetFx3','NetFx4-AdvSrvs')
+            ChocoPackages               = @('googlechrome','filezilla','vlc','sublimetext3','jre8','7zip','greenshot','keepass','conemu','mysql.workbench','googledrive','f.lux','pidgin','unchecky','rufus','classic-shell','autohotkey','evernote','VisualStudioCode')
+            WindowsFeatures             = @('Microsoft-Windows-Subsystem-Linux','Microsoft-Hyper-V','Microsoft-Hyper-V-All','Microsoft-Hyper-V-Hypervisor','Microsoft-Hyper-V-Management-Clients','Microsoft-Hyper-V-Management-PowerShell','Microsoft-Hyper-V-Services','Microsoft-Hyper-V-Tools-All','NetFx3','NetFx4-AdvSrvs')
             PowerShellModules           = @('PSScriptAnalyzer','Pester','PSReadline','PowerShellISE-preview','ISESteroids','RemoteDesktop')
-            RemovedApps                 = @('Microsoft.3DBuilder','Microsoft.BingFinance','Microsoft.BingNews','Microsoft.BingSports','Microsoft.BingWeather','Microsoft.MicrosoftOfficeHub','Microsoft.MicrosoftSolitaireCollection','Microsoft.Office.OneNote','Microsoft.People','Microsoft.SkypeApp','Microsoft.Appconnector','Microsoft.Getstarted','Microsoft.Windows.ParentalControls','Microsoft.Windows.ShellExperienceHost','microsoft.windowscommunicationsapps','Microsoft.WindowsMaps','Microsoft.WindowsPhone','Microsoft.XboxApp','Microsoft.XboxIdentityProvider','Microsoft.ZuneMusic','Microsoft.ZuneVideo')
+            RemovedApps                 = @('Microsoft.3DBuilder','Microsoft.BingFinance','Microsoft.BingNews','Microsoft.BingSports','Microsoft.BingWeather','Microsoft.MicrosoftOfficeHub','Microsoft.MicrosoftSolitaireCollection','Microsoft.Office.OneNote','Microsoft.People','Microsoft.SkypeApp','Microsoft.Appconnector','Microsoft.Getstarted','microsoft.windowscommunicationsapps','Microsoft.WindowsMaps','Microsoft.WindowsPhone','Microsoft.XboxApp','Microsoft.XboxIdentityProvider','Microsoft.ZuneMusic','Microsoft.ZuneVideo')
         }
     )
 }
@@ -64,6 +64,7 @@ configuration Win10
     Import-DscResource -ModuleName 'xTimeZone'  
     Import-DscResource -ModuleName 'xHyper-V'
     Import-DscResource -ModuleName 'cAppxPackage'  
+    Import-DscResource -ModuleName 'xPSDesiredStateConfiguration'
  
     Node $AllNodes.NodeName
     {
@@ -75,41 +76,33 @@ configuration Win10
             }    
         }
 
-        File 'Profile'
+        xRemoteFile 'profile'
         {
             DestinationPath = "$home\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
-            Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/Microsoft.PowerShell_profile.ps1 -usebasicparsing).content -replace '﻿',''
-            Ensure          = 'Present'
-            Force           = $true
-            Type            = 'File'
+            Uri             = 'https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/Microsoft.PowerShell_profile.ps1'
+            MatchSource     = $True
         }
 
-        File 'ISE_Profile'
+        xRemoteFile 'ISE_Profile'
         {
             DestinationPath = "$home\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
-            Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/Microsoft.PowerShellISE_profile.ps1 -usebasicparsing).content -replace '﻿',''
-            Ensure          = 'Present'
-            Force           = $true
-            Type            = 'File'
+            Uri             = 'https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/Microsoft.PowerShellISE_profile.ps1'
+            MatchSource     = $True
         }
 
-        File 'conemuconfig'
+        xRemoteFile 'conemuconfig'
         {
             DestinationPath = "$env:APPDATA\ConEmu.xml"
-            Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/ConEmu.xml -usebasicparsing).content -replace '﻿',''
-            Ensure          = 'Present'
-            Force           = $true
-            Type            = 'File'
+            Uri             = 'https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/ConEmu.xml'
+            MatchSource     = $True
             DependsOn       = '[cChocoPackageInstaller]conemu'
         }
 
-        File 'autohotkey'
+        xRemoteFile 'autohotkey'
         {
             DestinationPath = "$env:appdata\Microsoft\Windows\Start Menu\Programs\Startup\ahkconfig.ahk"
-            Contents        = (Invoke-WebRequest -Uri https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/ahkconfig.ahk -usebasicparsing).content -replace '﻿',''
-            Ensure          = 'Present'
-            Force           = $true
-            Type            = 'File'
+            Uri             = 'https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/ahkconfig.ahk'
+            MatchSource     = $True
             DependsOn       = '[cChocoPackageInstaller]autohotkey'
         }
 
@@ -125,6 +118,7 @@ configuration Win10
                 DependsOn            = '[cChocoInstaller]installChoco'
                 PsDscRunAsCredential = $Credential
                 chocoParams          = '--allowemptychecksum --allowemptychecksumsecure'
+                AutoUpgrade          = $True
             }
         }
  
@@ -162,7 +156,7 @@ configuration Win10
 
         Registry 'DeveloperMode'
         {
-            Ensure      = "Present"  # You can also set Ensure to "Absent"
+            Ensure      = "Present"  
             Key         = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock"
             ValueName   = "AllowDevelopmentWithoutDevLicense"
             ValueData   = "1"
@@ -174,4 +168,4 @@ configuration Win10
 
 $config = win10 -ConfigurationData $ConfigurationData -credential $cred -verbose
 
-Start-DscConfiguration -Verbose -Path $config.PSParentPath -Wait -Force
+Start-DscConfiguration -Verbose -Path $config.PSParentPath -Wait -force
