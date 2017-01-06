@@ -193,3 +193,10 @@ configuration Win10
 $config = win10 -ConfigurationData $ConfigurationData -credential $cred -verbose
 
 Start-DscConfiguration -Verbose -Path $config.PSParentPath -Wait -force
+
+#####################
+# Todo DSC for:     #
+#####################
+New-Item -ItemType SymbolicLink -Name 'EvernoteTemplates' -Path "$env:APPDATA\Sublime Text 3\Packages\User\" -Value "$home\github\WIN10-DSC-Configuration\configfiles\EvernoteTemplates" -force
+
+# Install Sublime Evernote, Sublime Key-Bindings
