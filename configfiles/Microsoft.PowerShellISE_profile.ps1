@@ -89,11 +89,11 @@ Function Add-KeyBoardShortcut {
 }
 Add-KeyBoardShortcut
 
-Function ConvertTo-CompressedBase64 {
+function ConvertTo-CompressedBase64 {
     [cmdletbinding()]
     param(
         [Parameter(
-                ValueFromPipeline=$true
+            ValueFromPipeline=$true
         )]
         [string] $InputObject
     )
@@ -107,6 +107,10 @@ Function ConvertTo-CompressedBase64 {
 
 $null = $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add(
     'ConvertTo-CompressedIPAutomata', {
-        '$bd=[Convert]::FromBase64String(''{0}'');$ms=New-Object IO.MemoryStream;$ms.Write($bd,0,$bd.Length);$null=$ms.Seek(0,0);(New-Object IO.StreamReader((New-Object IO.Compression.GZipStream($ms,[IO.Compression.CompressionMode]0)))).ReadToEnd() | Tee-Object -Variable exec | Write-Verbose -Verbose; iex $exec' -f (ConvertTo-CompressedBase64 -InputObject $psISE.CurrentFile.Editor.SelectedText) | Set-Clipboard
+        $StringBuilder = '$host.UI.RawUI.BufferSize=new-object Management.Automation.Host.Size(320,50)',
+                         '$bd=[Convert]::FromBase64String(''{0}'')',
+                         '$ms=New-Object IO.MemoryStream;$ms.Write($bd,0,$bd.Length);$null=$ms.Seek(0,0)',
+                         '(New-Object IO.StreamReader((New-Object IO.Compression.GZipStream($ms,[IO.Compression.CompressionMode]0)))).ReadToEnd()|Invoke-Expression' -join ';'
+        $StringBuilder -f (ConvertTo-CompressedBase64 -InputObject $psISE.CurrentFile.Editor.SelectedText) | Set-Clipboard
     }, 'CTRL+ALT+U'
 )
