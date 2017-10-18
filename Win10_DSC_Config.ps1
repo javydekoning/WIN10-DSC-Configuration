@@ -3,16 +3,16 @@
 #####################
 Enable-PSRemoting -SkipNetworkProfileCheck -Force
 
-'cChoco','PackageManagementProviderResource','PowerShellModule','xTimeZone','xHyper-V','cAppxPackage','xPSDesiredStateConfiguration','cGit' | %{
-  if (-not(get-dscresource -module $_)) 
-  {
+$dscresources = 'cChoco','PackageManagementProviderResource','PowerShellModule',
+                'xTimeZone','cAppxPackage','xPSDesiredStateConfiguration'
+
+$dscresources.ForEach({
+  if (-not(get-dscresource -module $_)) {
     find-module -name $_ | install-module -SkipPublisherCheck -force
   }
-}
+})
 
-if (-not($cred)) {
-  $cred = get-credential "$(whoami)"
-}
+if (!$cred) {$cred = get-credential "$(whoami)"}
 
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Force
 
@@ -38,20 +38,39 @@ configuration LCMConfig
 $out        = LCMConfig
 $cimsession = New-CimSession -ComputerName localhost
 
-Set-DscLocalConfigurationManager -Path $out.PSParentPath -Force -Verbose -CimSession $cimsession
+Set-DscLocalConfigurationManager -Path $out.PSParentPath -Force -Verbose `
+-CimSession $cimsession
 
 #####################
 # DSC Configuration #
 #####################
+$ChocoPackages = @(
+  'googlechrome','filezilla','sublimetext3','jre8','7zip','greenshot','keepass',
+  'mysql.workbench','f.lux','pidgin','unchecky','rufus','autohotkey','evernote',
+  'nodejs','keypirinha','MobaXTerm','visualstudiocode'
+)
+
+$WindowsFeatures = @(
+  'Microsoft-Windows-Subsystem-Linux','Microsoft-Hyper-V',
+  'Microsoft-Hyper-V-All','Microsoft-Hyper-V-Hypervisor',
+  'Microsoft-Hyper-V-Management-Clients',
+  'Microsoft-Hyper-V-Management-PowerShell','Microsoft-Hyper-V-Services',
+  'Microsoft-Hyper-V-Tools-All'
+)
+
+$PowerShellModules = @(
+  'PSScriptAnalyzer','Pester','ISESteroids','RemoteDesktop','z'
+)
+
 $ConfigurationData = @{
   AllNodes = @(
     @{
         NodeName                    = 'Localhost'
+        #Not safe but required for cChoco packages
         PSDscAllowPlainTextPassword = $true
-        ChocoPackages               = @('git','googlechrome','filezilla','vlc','sublimetext3','jre8','7zip','greenshot','keepass','conemu','mysql.workbench','googledrive','f.lux','pidgin','unchecky','rufus','classic-shell','autohotkey','evernote')
-        WindowsFeatures             = @('Microsoft-Windows-Subsystem-Linux','Microsoft-Hyper-V','Microsoft-Hyper-V-All','Microsoft-Hyper-V-Hypervisor','Microsoft-Hyper-V-Management-Clients','Microsoft-Hyper-V-Management-PowerShell','Microsoft-Hyper-V-Services','Microsoft-Hyper-V-Tools-All','NetFx3','NetFx4-AdvSrvs')
-        PowerShellModules           = @('PSScriptAnalyzer','Pester','PSReadline','PowerShellISE-preview','ISESteroids','RemoteDesktop')
-        RemovedApps                 = @('Microsoft.3DBuilder','Microsoft.BingFinance','Microsoft.BingNews','Microsoft.BingSports','Microsoft.BingWeather','Microsoft.MicrosoftOfficeHub','Microsoft.MicrosoftSolitaireCollection','Microsoft.Office.OneNote','Microsoft.People','Microsoft.SkypeApp','Microsoft.Appconnector','Microsoft.Getstarted','microsoft.windowscommunicationsapps','Microsoft.WindowsMaps','Microsoft.WindowsPhone','Microsoft.XboxApp','Microsoft.XboxIdentityProvider','Microsoft.ZuneMusic','Microsoft.ZuneVideo')
+        ChocoPackages               = $ChocoPackages
+        WindowsFeatures             = $WindowsFeatures
+        PowerShellModules           = $PowerShellModules
     }
   )
 }
@@ -68,10 +87,7 @@ configuration Win10
   Import-DscResource -ModuleName 'PackageManagementProviderResource'
   Import-DscResource -ModuleName 'PowerShellModule'
   Import-DscResource -ModuleName 'xTimeZone'  
-  Import-DscResource -ModuleName 'xHyper-V'
-  Import-DscResource -ModuleName 'cAppxPackage'  
   Import-DscResource -ModuleName 'xPSDesiredStateConfiguration'
-  Import-DscResource -ModuleName 'cGit'
  
   Node $AllNodes.NodeName
   {
@@ -97,14 +113,6 @@ configuration Win10
       MatchSource     = $True
     }
 
-    xRemoteFile 'conemuconfig'
-    {
-      DestinationPath = "$env:APPDATA\ConEmu.xml"
-      Uri             = 'https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/ConEmu.xml'
-      MatchSource     = $True
-      DependsOn       = '[cChocoPackageInstaller]conemu'
-    }
-
     xRemoteFile 'autohotkey'
     {
       DestinationPath = "$env:appdata\Microsoft\Windows\Start Menu\Programs\Startup\ahkconfig.ahk"
@@ -120,6 +128,30 @@ configuration Win10
       MatchSource     = $True
       DependsOn       = '[cChocoPackageInstaller]sublimetext3'
     }
+
+    xRemoteFile 'Keypirinha.ini'
+    {
+      DestinationPath = "$env:APPDATA\Keypirinha\User\Keypirinha.ini"
+      Uri             = 'https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/Keypirinha/Keypirinha.ini'
+      MatchSource     = $True
+      DependsOn       = '[cChocoPackageInstaller]Keypirinha'
+    }
+
+    xRemoteFile 'apps.ini'
+    {
+      DestinationPath = "$env:APPDATA\Keypirinha\User\apps.ini"
+      Uri             = 'https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/Keypirinha/apps.ini'
+      MatchSource     = $True
+      DependsOn       = '[cChocoPackageInstaller]Keypirinha'
+    }
+
+    xRemoteFile 'filebrowser.ini'
+    {
+      DestinationPath = "$env:APPDATA\Keypirinha\User\filebrowser.ini"
+      Uri             = 'https://raw.githubusercontent.com/javydekoning/WIN10-DSC-Configuration/master/configfiles/Keypirinha/filebrowser.ini'
+      MatchSource     = $True
+      DependsOn       = '[cChocoPackageInstaller]Keypirinha'
+    }    
 
     cChocoInstaller installChoco
     {
@@ -137,7 +169,7 @@ configuration Win10
       }
     }
  
-    $Node.PowerShellModules.foreach{
+    $Node.PowerShellModules.ForEach{
       PSModuleResource $_
       {
         Ensure      = 'present'
@@ -150,53 +182,9 @@ configuration Win10
       IsSingleInstance = 'Yes'
       TimeZone         = 'W. Europe Standard Time'
     }
-    
-    xVMSwitch defaultSwitch
-    {
-      Name = 'defaultSwitch'
-      Type = 'External'
-      Ensure = 'present'
-      DependsOn = '[WindowsOptionalFeature]Microsoft-Hyper-V-Management-PowerShell'
-      NetAdapterName = 'Ethernet'
-    } 
-    
-    $Node.RemovedApps.ForEach{
-      cAppxPackage $_
-      {
-        Name                 = "$_"
-        Ensure               = 'Absent'
-        PsDscRunAsCredential = $Credential
-      }
-    }
-
-    Registry 'DeveloperMode'
-    {
-      Ensure      = "Present"  
-      Key         = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock"
-      ValueName   = "AllowDevelopmentWithoutDevLicense"
-      ValueData   = "1"
-      ValueType   = "Dword"
-      Force       = $true
-    }
-
-    cGitRepository WIN10DSCCONF
-    {
-      BaseDirectory        = "$home\github"
-      Ensure               = 'Present'
-      Repository           = 'https://github.com/javydekoning/WIN10-DSC-Configuration.git'
-      DependsOn            = '[cChocoPackageInstaller]git'
-      PsDscRunAsCredential = $Credential
-    }    
   }
 }
 
 $config = win10 -ConfigurationData $ConfigurationData -credential $cred -verbose
 
 Start-DscConfiguration -Verbose -Path $config.PSParentPath -Wait -force
-
-#####################
-# Todo DSC for:     #
-#####################
-New-Item -ItemType SymbolicLink -Name 'EvernoteTemplates' -Path "$env:APPDATA\Sublime Text 3\Packages\User\" -Value "$home\github\WIN10-DSC-Configuration\configfiles\EvernoteTemplates" -force
-
-# Install Sublime Evernote, Sublime Key-Bindings
