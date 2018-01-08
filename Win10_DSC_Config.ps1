@@ -46,7 +46,7 @@ Set-DscLocalConfigurationManager -Path $out.PSParentPath -Force -Verbose `
 #####################
 $ChocoPackages = @(
   'googlechrome','filezilla','sublimetext3','jre8','7zip','greenshot','keepass',
-  'mysql.workbench','f.lux','pidgin','unchecky','rufus','autohotkey','evernote',
+  'dbeaver','f.lux','pidgin','unchecky','rufus','autohotkey','evernote',
   'nodejs','keypirinha','MobaXTerm','visualstudiocode'
 )
 
