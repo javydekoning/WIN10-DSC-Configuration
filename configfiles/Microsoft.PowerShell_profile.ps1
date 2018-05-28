@@ -11,19 +11,6 @@ if (Test-Path $CredFile) {
    Write-Warning "No Credential file found at $CredFile"
 } 
 
-function pon-ipwin {
-   connect-mstsc -computername 'ipwin01.pon.ip-soft.net' -cred $c.ipwin
-   connect-mstsc -computername 'ipwin02.pon.ip-soft.net' -cred $c.ipwin
-}
-
-function ippc05 {
-   connect-mstsc -computername 'ippc05.pon.ip-soft.net' -cred $c.ippc05
-}
-
-function ippc02 {
-   connect-mstsc -computername 'ippc02.pon.ip-soft.net' -cred $c.ipsoft
-}
-
 Register-EngineEvent PowerShell.Exiting –Action {
    Export-Clixml -InputObject $c -Path $CredFile
 }
