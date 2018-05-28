@@ -8,16 +8,14 @@ Kind Regards,
 
 
 Javy de Koning
-Sr. Windows Engineer
-IPsoft, Inc.
-Javy.deKoning@ipsoft.com
-http://www.ipsoft.com
-Direct: {+}31(0)20-562-5260 / Mobile: {+}31(0)6-2047-3502
+jdekoning@javydekoning.com
+http://www.javydekoning.com
+Mobile: {+}31(0)6-2047-3502
 )
 
 MyClose = 
 (
-Hence, we are now closing this ticket. Feel free to re-open this case if in case you require any further assistance on this matter. If you need immediate assistance, please call {+}1 (866) IPSOFT6.
+Hence, we are now closing this ticket. Feel free to re-open this case if in case you require any further assistance on this matter.
 
 %MySignature%
 )
